@@ -1,0 +1,25 @@
+# Auto-generated cell: roberta-sst2 on rotten-tomatoes. Edit gen_specs.py, not this file.
+spec_version: "1.0.0"
+paper_id: "sentiment-generalization"
+task: "binary_sentiment"
+metric_lib_version: "0.1.0"
+dataset:
+  hf_id: "cornell-movie-review-data/rotten_tomatoes"
+  config: null
+  split: "test"
+  version: "1.0.0"
+  revision: "aa13bc287fa6fcab6daf52f0dfb9994269ffea28"
+  text_field: "text"
+  label_field: "label"
+model:
+  hf_id: "textattack/roberta-base-SST-2"
+  revision: "84ee248b91053ef5d0c748bbac4edfba1cf89584"
+inference:
+  seed: 42
+  max_length: 256
+  batch_size: 32
+metrics:
+  primary: "accuracy"
+  secondary: ["f1"]
+reproduce_target:
+  accuracy: { min: 0.5, max: 1.0 }

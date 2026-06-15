@@ -1,41 +1,46 @@
-# experiment-template
+# reproduce-sentiment-generalization
 
-GitHub **template repo** for reproducing a new paper under the eval standard.
-Ships a working DistilBERT-SST-2 example so it runs green immediately — you
-replace it with your paper.
+A **multi-model × multi-benchmark** study in one paper, built on the eval
+standard. It measures how well sentiment classifiers generalise from their
+training distribution (SST-2) to an out-of-domain benchmark (Rotten Tomatoes).
 
-## When you want to experiment with a new paper
+Created from [experiment-template](https://github.com/dream-ai-lab/experiment-template);
+depends on a pinned [eval-lib](https://github.com/dream-ai-lab/eval-lib).
 
-1. Click **“Use this template” → Create a new repository**, named
-   `reproduce-<paper-id>`, in the `dream-ai-lab` org.
-   (CLI: `gh repo create dream-ai-lab/reproduce-<paper-id> --template dream-ai-lab/experiment-template --public --clone`)
+## The matrix
 
-2. **Fill `eval_spec.yaml`** (survey member) — pin dataset + model to real HF
-   commit SHAs, pick `metrics.primary` from `eval-lib` (`accuracy`, `f1`,
-   `f1_macro`), set `reproduce_target`. Get SHAs:
-   ```bash
-   curl -s https://huggingface.co/api/models/<org/model> | python -c "import sys,json;print(json.load(sys.stdin)['sha'])"
-   ```
+| | SST-2 (in-domain) | Rotten Tomatoes (out-of-domain) |
+|---|---|---|
+| distilbert-base-uncased-finetuned-sst-2-english | ✓ | ✓ |
+| textattack/roberta-base-SST-2 | ✓ | ✓ |
+| textattack/distilbert-base-uncased-SST-2 | ✓ | ✓ |
 
-3. **Edit `model_fn`** in `reproduce.py` (experiment member) — map the model's
-   output labels to the dataset's label ids; for non-classification tasks,
-   replace the body. The contract is just `model_fn(texts) -> list[int]`.
+3 models × 2 benchmarks = **6 cells**. Each cell is its own pinned
+`eval_spec.yaml` under `specs/` (one model + one dataset, real HF commit SHAs),
+so every run's golden record is exact. All cells share `paper_id:
+sentiment-generalization`, so they land in one MLflow experiment and the matrix
+is a pivot on `params.model.hf_id` × `params.dataset.hf_id`.
 
-4. **Run:**
-   ```bash
-   pip install -r requirements.txt        # pulls eval-lib (pinned) + torch + transformers
-   python reproduce.py
-   ```
-   If `target_passed=True`, you reproduced it. Log to the shared server with
-   `MLFLOW_TRACKING_URI=http://<server>:5000`.
+## Run it
 
-5. **Propose** (optional): add `proposal.py`, fork the baseline run — still no
-   PR to any central repo.
+```bash
+pip install -r requirements.txt
+python gen_specs.py          # (re)generate specs/ from the model×benchmark lists
+# log to the shared server:
+export MLFLOW_TRACKING_URI=https://mlflow.note.transformerlabs.ai
+export MLFLOW_TRACKING_USERNAME=<user>
+export MLFLOW_TRACKING_PASSWORD=<pass>
+python run_matrix.py         # runs all 6 cells, prints the accuracy matrix
+```
 
-## What you never do
+## Add a model or benchmark
 
-- Copy or fork `eval-lib` — depend on a **pinned version** (`requirements.txt`).
-- Write your own metric — add it to `eval-lib` and bump its version.
-- PR experiment code back to a central repo — this repo is yours.
+Edit `MODELS` / `BENCHMARKS` in `gen_specs.py`, re-run it, commit the new
+`specs/*.yaml`, and `run_matrix.py` picks them up. CI validates every cell spec
+against the pinned standard.
 
-The only central PRs are: a new metric → `eval-lib`, a new spec → `paper-registry`.
+## What you only write
+
+`model_fn` in `run_matrix.py` — a single generic sentiment classifier that maps
+any model's label (`POSITIVE`/`NEGATIVE` or `LABEL_1`/`LABEL_0`) to 0/1.
+Everything else (data loading, metrics, MLflow golden record) is eval-lib.

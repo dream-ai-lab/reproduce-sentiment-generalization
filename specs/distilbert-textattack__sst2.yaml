@@ -1,0 +1,25 @@
+# Auto-generated cell: distilbert-textattack on sst2. Edit gen_specs.py, not this file.
+spec_version: "1.0.0"
+paper_id: "sentiment-generalization"
+task: "binary_sentiment"
+metric_lib_version: "0.1.0"
+dataset:
+  hf_id: "stanfordnlp/sst2"
+  config: null
+  split: "validation"
+  version: "2.0.0"
+  revision: "8d51e7e4887a4caaa95b3fbebbf53c0490b58bbb"
+  text_field: "sentence"
+  label_field: "label"
+model:
+  hf_id: "textattack/distilbert-base-uncased-SST-2"
+  revision: "6fea14f6264ea28d8405573dac228b3e11137643"
+inference:
+  seed: 42
+  max_length: 256
+  batch_size: 32
+metrics:
+  primary: "accuracy"
+  secondary: ["f1"]
+reproduce_target:
+  accuracy: { min: 0.5, max: 1.0 }
